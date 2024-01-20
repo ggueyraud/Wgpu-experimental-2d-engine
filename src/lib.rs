@@ -9,7 +9,7 @@ use rusty_core::{
     glam::{f32::Mat4, Vec2},
     graphics::{
         shape::{CircleShape, RectangleShape, ShapeVertex},
-        Transformable, Vertex,
+        Transformable, Vertex, texture::Texture,
     },
     wgpu, Context, Ctx,
 };
@@ -47,6 +47,7 @@ struct State {
     rect2: RectangleShape,
     circ: CircleShape,
     rotation: f32,
+    // texture: Texture
 }
 
 impl State {
@@ -291,6 +292,9 @@ impl State {
         let mut circ = CircleShape::new(context.clone(), 50., 30);
         circ.set_position((300., 300.).into());
 
+        // let player_bytes = include_bytes!("../assets/spritesheets/player.png");
+        // let texture = Texture::from_bytes(context.clone(), player_bytes, "player").unwrap();
+
         Self {
             surface,
             context,
@@ -307,6 +311,7 @@ impl State {
             rect2,
             circ,
             rotation: 0.,
+            // texture
         }
     }
 

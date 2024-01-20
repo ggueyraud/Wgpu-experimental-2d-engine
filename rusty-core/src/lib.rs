@@ -3,6 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+#[cfg(feature = "audio")]
+pub mod audio;
+
 #[cfg(feature = "graphics")]
 pub mod graphics;
 

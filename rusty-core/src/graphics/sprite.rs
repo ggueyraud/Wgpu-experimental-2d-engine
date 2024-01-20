@@ -1,4 +1,5 @@
 use wgpu::util::DeviceExt;
+use glam::Vec2;
 
 use crate::{math::Rect, Ctx};
 
@@ -82,8 +83,59 @@ impl Sprite {
     }
 }
 
-// impl Transformable for Sprite {
-//     fn set_position(&mut self, position: glam::Vec2) {
-//         self.mesh.transform.position = position;
-//     }
-// }
+impl Transformable for Sprite {
+    fn set_position(&mut self, position: glam::Vec2) {
+        self.mesh.transform.position = position;
+
+        // update model matrix
+    }
+
+    fn position(&self) -> &Vec2 {
+        &self.mesh.transform.position
+    }
+
+    fn r#move(&mut self, offset: Vec2) {
+        self.mesh.transform.position += offset;
+
+        // self.update();
+    }
+
+    fn set_rotation(&mut self, rotation: f32) {
+        self.mesh.transform.rotation = rotation;
+
+        // update model matrix
+    }
+
+    fn rotation(&self) -> f32 {
+        self.mesh.transform.rotation
+    }
+
+    fn rotate(&mut self, angle: f32) {
+        if self.mesh.transform.rotation + angle > 360. {
+            self.mesh.transform.rotation = 0.;
+        } else {
+            self.mesh.transform.rotation += angle;
+        };
+
+        // update model matrix
+    }
+
+    fn set_scale(&mut self, scale: f32) {
+        self.mesh.transform.scale = scale;
+
+        
+    }
+
+    fn scale(&self) -> f32 {
+        self.mesh.transform.scale
+    }
+
+    fn set_origin(&mut self, origin: Vec2) {
+        self.mesh.transform.origin = origin;
+        // self.update();
+    }
+
+    fn origin(&self) -> &Vec2 {
+        &self.mesh.transform.origin
+    }
+}
