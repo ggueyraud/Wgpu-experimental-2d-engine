@@ -1,5 +1,5 @@
-use crate::graphics::shape::RectangleShape;
 use crate::Ctx;
+use crate::graphics::shape::RectangleShape;
 
 struct Button {
     shape: RectangleShape, // text:

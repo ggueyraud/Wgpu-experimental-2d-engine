@@ -4,25 +4,32 @@ use std::{
     time::Instant,
 };
 
-use glam::Vec2;
-use graphics::{Transformable, Vertex};
+// use graphics::{Transformable, Vertex};
+use rusty_core::{
+    glam::{f32::Mat4, Vec2},
+    graphics::{
+        shape::{CircleShape, RectangleShape, ShapeVertex},
+        Transformable, Vertex,
+    },
+    wgpu, Context, Ctx,
+};
 use wgpu::util::DeviceExt;
 use winit::{event::WindowEvent, window::Window};
 
-mod graphics;
-mod math;
-mod ui;
+// mod graphics;
+// mod math;
+// mod ui;
 
-#[derive(Debug)]
-pub struct Context {
-    pub device: wgpu::Device,
-    pub queue: wgpu::Queue,
-    pub config: wgpu::SurfaceConfiguration,
-    pub render_pipelines: HashMap<String, wgpu::RenderPipeline>,
-    pub bind_group_layouts: HashMap<String, wgpu::BindGroupLayout>,
-}
+// #[derive(Debug)]
+// pub struct Context {
+//     pub device: wgpu::Device,
+//     pub queue: wgpu::Queue,
+//     pub config: wgpu::SurfaceConfiguration,
+//     pub render_pipelines: HashMap<String, wgpu::RenderPipeline>,
+//     pub bind_group_layouts: HashMap<String, wgpu::BindGroupLayout>,
+// }
 
-pub type Ctx = Arc<Mutex<Context>>;
+// pub type Ctx = Arc<Mutex<Context>>;
 
 struct State {
     surface: wgpu::Surface,
@@ -36,9 +43,9 @@ struct State {
     resolution_bind_group: wgpu::BindGroup,
     projection_buffer: wgpu::Buffer,
     projection_bind_group: wgpu::BindGroup,
-    rect: graphics::shape::RectangleShape,
-    rect2: graphics::shape::RectangleShape,
-    circ: graphics::shape::CircleShape,
+    rect: RectangleShape,
+    rect2: RectangleShape,
+    circ: CircleShape,
     rotation: f32,
 }
 
@@ -167,14 +174,8 @@ impl State {
 
         // Projection uniform
         // let projection = glam::f32::Mat4::orthographic_rh(0., size.width as f32, 400., 0., 0., 1.);
-        let projection = glam::f32::Mat4::orthographic_rh(
-            0.0,
-            size.width as f32,
-            size.height as f32,
-            0.0,
-            -1.0,
-            0.0,
-        );
+        let projection =
+            Mat4::orthographic_rh(0.0, size.width as f32, size.height as f32, 0.0, -1.0, 0.0);
         let projection_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("projection buffer"),
             contents: bytemuck::cast_slice(&[projection]),
@@ -240,7 +241,7 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[graphics::shape::ShapeVertex::desc()],
+                buffers: &[ShapeVertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -280,14 +281,14 @@ impl State {
             render_pipelines: HashMap::new(),
             bind_group_layouts,
         }));
-        let mut rect = graphics::shape::RectangleShape::new(context.clone(), (100., 100.).into());
+        let mut rect = RectangleShape::new(context.clone(), (100., 100.).into());
         rect.set_position((200., 200.).into());
         rect.set_origin((50., 50.).into());
 
-        let rect2 = graphics::shape::RectangleShape::new(context.clone(), (32., 32.).into());
+        let rect2 = RectangleShape::new(context.clone(), (32., 32.).into());
         // rect.set_position((position))
 
-        let mut circ = graphics::shape::CircleShape::new(context.clone(), 50., 30);
+        let mut circ = CircleShape::new(context.clone(), 50., 30);
         circ.set_position((300., 300.).into());
 
         Self {
@@ -377,7 +378,7 @@ impl State {
             render_pass.set_bind_group(1, &self.resolution_bind_group, &[]);
             render_pass.set_bind_group(2, &self.projection_bind_group, &[]);
 
-            use graphics::Drawable;
+            use rusty_core::graphics::Drawable;
             let rect_mesh = self.rect.mesh();
             render_pass.draw_mesh(rect_mesh);
             // render_pass.draw_mesh(&self.rect2.mesh);
