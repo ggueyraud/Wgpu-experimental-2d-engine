@@ -4,37 +4,22 @@ use std::{
     time::Instant,
 };
 
-// use graphics::{Transformable, Vertex};
 use rusty_core::{
     glam::{f32::Mat4, Vec2},
     graphics::{
         shape::{CircleShape, RectangleShape, ShapeVertex},
-        Transformable, Vertex, texture::Texture,
+        texture::Texture,
+        Transformable, Vertex,
     },
     wgpu, Context, Ctx,
 };
 use wgpu::util::DeviceExt;
 use winit::{event::WindowEvent, window::Window};
 
-// mod graphics;
-// mod math;
-// mod ui;
-
-// #[derive(Debug)]
-// pub struct Context {
-//     pub device: wgpu::Device,
-//     pub queue: wgpu::Queue,
-//     pub config: wgpu::SurfaceConfiguration,
-//     pub render_pipelines: HashMap<String, wgpu::RenderPipeline>,
-//     pub bind_group_layouts: HashMap<String, wgpu::BindGroupLayout>,
-// }
-
-// pub type Ctx = Arc<Mutex<Context>>;
-
-struct State {
-    surface: wgpu::Surface,
+struct State<'a> {
+    surface: wgpu::Surface<'a>,
     context: Ctx,
-    window: Window,
+    window: Arc<Window>,
     render_pipeline: wgpu::RenderPipeline,
     mouse_buffer: wgpu::Buffer,
     mouse_position: Vec2,
@@ -50,11 +35,12 @@ struct State {
     // texture: Texture
 }
 
-impl State {
+impl<'a> State<'a> {
     async fn new(window: Window) -> Self {
         let size = window.inner_size();
+        let window = Arc::new(window);
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
-        let surface = unsafe { instance.create_surface(&window) }.unwrap();
+        let surface = instance.create_surface(window.clone()).unwrap();
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 compatible_surface: Some(&surface),
@@ -81,6 +67,7 @@ impl State {
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
+            desired_maximum_frame_latency: 1,
         };
         surface.configure(&device, &config);
 

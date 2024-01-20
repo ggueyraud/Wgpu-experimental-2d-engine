@@ -12,7 +12,7 @@ derive_more = { version = "0.99.17", default-features = false, features = ["from
 glam = { version = "0.25.0", features = ["bytemuck"] }
 image = { version = "0.24.8", default-features = false, features = ["png", "jpeg"] }
 winit = { version = "0.29.10", features = ["rwh_05"] }
-wgpu = "0.18.0"
+wgpu = "0.19.0"
 rodio = { version = "0.17.3", optional = true }
 
 [features]
