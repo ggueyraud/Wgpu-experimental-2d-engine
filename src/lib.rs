@@ -9,7 +9,7 @@ use rusty_core::{
     graphics::{
         shape::{CircleShape, RectangleShape, ShapeVertex},
         texture::Texture,
-        Transformable, Vertex,
+        Transformable, Vertex, sprite::Sprite,
     },
     wgpu, Context, Ctx,
 };
@@ -32,11 +32,13 @@ struct State<'a> {
     rect2: RectangleShape,
     circ: CircleShape,
     rotation: f32,
-    // texture: Texture
+    sprite: Sprite
 }
 
 impl<'a> State<'a> {
     async fn new(window: Window) -> Self {
+        let mut bind_group_layouts = HashMap::new();
+
         let size = window.inner_size();
         let window = Arc::new(window);
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
@@ -96,6 +98,7 @@ impl<'a> State<'a> {
                 ],
                 label: Some("texture_bind_group_layout"),
             });
+        bind_group_layouts.insert("texture".to_string(), texture_bind_group_layout);
 
         // Uniform mouse
         let mouse_position = Vec2::default();
@@ -192,7 +195,6 @@ impl<'a> State<'a> {
             label: Some("projection bind group"),
         });
 
-        let mut bind_group_layouts = HashMap::new();
         let transform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -279,8 +281,9 @@ impl<'a> State<'a> {
         let mut circ = CircleShape::new(context.clone(), 50., 30);
         circ.set_position((300., 300.).into());
 
-        // let player_bytes = include_bytes!("../assets/spritesheets/player.png");
-        // let texture = Texture::from_bytes(context.clone(), player_bytes, "player").unwrap();
+        let player_bytes = include_bytes!("../assets/spritesheets/player.png");
+        let texture = Texture::from_bytes(context.clone(), player_bytes, "player").unwrap();
+        let sprite = Sprite::new(context.clone(), texture);
 
         Self {
             surface,
@@ -298,7 +301,7 @@ impl<'a> State<'a> {
             rect2,
             circ,
             rotation: 0.,
-            // texture
+            sprite
         }
     }
 

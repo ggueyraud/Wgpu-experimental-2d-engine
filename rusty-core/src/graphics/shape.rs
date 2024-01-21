@@ -10,7 +10,7 @@ use wgpu::{util::DeviceExt, BufferAddress, VertexAttribute, VertexBufferLayout, 
 pub struct ShapeVertex {
     pub position: [f32; 3],
     pub color: [f32; 4],
-    // pub tex_coords: [f32; 2]
+    pub tex_coords: [f32; 2]
 }
 
 impl Vertex for ShapeVertex {
@@ -31,6 +31,11 @@ impl Vertex for ShapeVertex {
                     shader_location: 1,
                     format: VertexFormat::Float32x4,
                 },
+                VertexAttribute {
+                    offset: mem::size_of::<[f32; 2]>() as BufferAddress,
+                    shader_location: 2,
+                    format: VertexFormat::Float32x2
+                }
             ],
         }
     }
@@ -64,18 +69,22 @@ impl RectangleShape {
             ShapeVertex {
                 position: [0., 0., 0.],
                 color: [1., 1., 1., 1.0],
+                tex_coords: [0., 0.]
             },
             ShapeVertex {
                 position: [0., size.y, 0.],
                 color: [1., 1., 1., 1.0],
+                tex_coords: [0., 0.]
             },
             ShapeVertex {
                 position: [size.x, size.y, 0.],
                 color: [1., 1., 1., 1.0],
+                tex_coords: [0., 0.]
             },
             ShapeVertex {
                 position: [size.x, 0., 0.],
                 color: [1., 1., 1., 1.0],
+                tex_coords: [0., 0.]
             },
         ];
 
@@ -313,6 +322,7 @@ impl CircleShape {
         vertices.push(ShapeVertex {
             position: center,
             color,
+            tex_coords: [0., 0.]
         });
 
         for i in 0..point_count {
@@ -323,6 +333,7 @@ impl CircleShape {
             vertices.push(ShapeVertex {
                 position: [x, y, 0.0],
                 color,
+                tex_coords: [0., 0.]
             });
 
             indices.push(0);
