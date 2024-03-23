@@ -32,6 +32,7 @@ pub struct Mesh {
     transform: Transform,
     buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
+    // texture_bind_group: wgpu::BindGroup,
     num_elements: u32,
 }
 
@@ -60,6 +61,15 @@ impl Mesh {
             }],
             label: Some("transform bind group"),
         });
+        // let bind_group_layout = ctx.bind_group_layouts.get("texture").unwrap();
+        // let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     layout: bind_group_layout,
+        //     entries: &[wgpu::BindGroupEntry {
+        //         binding: 0,
+        //         resource: buffer.as_entire_binding(),
+        //     }],
+        //     label: Some("transform bind group"),
+        // });
 
         Self {
             vertex_buffer,
@@ -152,6 +162,7 @@ where
     'b: 'a,
 {
     fn draw_mesh(&mut self, mesh: &'b Mesh) {
+        self.set_bind_group(3, &mesh.bind_group, &[]);
         self.set_bind_group(3, &mesh.bind_group, &[]);
         self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
         self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);

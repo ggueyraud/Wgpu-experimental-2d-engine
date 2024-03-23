@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use super::{color, Mesh, Transform, Vertex};
+use super::{color, Mesh, Transform, Vertex, texture::{self, Texture}};
 use crate::{math::Rect, Ctx};
 use glam::Vec2;
 use wgpu::{util::DeviceExt, BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat};
@@ -32,7 +32,7 @@ impl Vertex for ShapeVertex {
                     format: VertexFormat::Float32x4,
                 },
                 VertexAttribute {
-                    offset: mem::size_of::<[f32; 2]>() as BufferAddress,
+                    offset: mem::size_of::<[f32; 7]>() as BufferAddress,
                     shader_location: 2,
                     format: VertexFormat::Float32x2
                 }
@@ -56,6 +56,7 @@ pub struct RectangleShape {
     vertices: Vec<ShapeVertex>,
     color: color::Color,
     context: Ctx,
+    // pub texture: texture::Texture
 }
 
 impl RectangleShape {
@@ -74,17 +75,17 @@ impl RectangleShape {
             ShapeVertex {
                 position: [0., size.y, 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [0., 48.]
             },
             ShapeVertex {
                 position: [size.x, size.y, 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [48., 48.]
             },
             ShapeVertex {
                 position: [size.x, 0., 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [48., 0.]
             },
         ];
 
@@ -156,6 +157,7 @@ impl RectangleShape {
             mesh,
             // vertex_buffer,
             vertices,
+            // texture: Texture::empty(context.clone()).unwrap(),
             color: color::WHITE,
             context,
         };
@@ -180,6 +182,7 @@ impl RectangleShape {
 
             if let Some(vertex) = self.vertices.get_mut(i) {
                 vertex.position = [point.x, point.y, 0.0];
+                vertex.color = self.color.into();
             }
 
             // TODO : writter buffer

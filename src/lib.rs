@@ -7,14 +7,19 @@ use std::{
 use rusty_core::{
     glam::{f32::Mat4, Vec2},
     graphics::{
-        shape::{CircleShape, RectangleShape, ShapeVertex},
+        color::RED,
+        shape::{CircleShape, RectangleShape, Shape, ShapeVertex},
+        sprite::Sprite,
         texture::Texture,
-        Transformable, Vertex, sprite::Sprite,
+        Transformable, Vertex,
     },
     wgpu, Context, Ctx,
 };
+use rusty_engine::asset_manager::AssetManager;
 use wgpu::util::DeviceExt;
 use winit::{event::WindowEvent, window::Window};
+
+mod player;
 
 struct State<'a> {
     surface: wgpu::Surface<'a>,
@@ -30,9 +35,12 @@ struct State<'a> {
     projection_bind_group: wgpu::BindGroup,
     rect: RectangleShape,
     rect2: RectangleShape,
-    circ: CircleShape,
+    // circ: CircleShape,
     rotation: f32,
-    sprite: Sprite
+    // sprite: Sprite,
+    texture: Texture,
+    asset_manager: AssetManager,
+    // player: player::Player,
 }
 
 impl<'a> State<'a> {
@@ -51,7 +59,16 @@ impl<'a> State<'a> {
             .await
             .unwrap();
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor::default(), None)
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    required_limits: wgpu::Limits {
+                        max_bind_groups: 8,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                None,
+            )
             .await
             .unwrap();
         let surface_caps = surface.get_capabilities(&adapter);
@@ -95,10 +112,19 @@ impl<'a> State<'a> {
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
                 ],
                 label: Some("texture_bind_group_layout"),
             });
-        bind_group_layouts.insert("texture".to_string(), texture_bind_group_layout);
 
         // Uniform mouse
         let mouse_position = Vec2::default();
@@ -218,11 +244,13 @@ impl<'a> State<'a> {
                     &resolution_bind_group_layout,
                     &projection_bind_group_layout,
                     &transform_bind_group_layout,
+                    &texture_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
 
         bind_group_layouts.insert("transform".to_string(), transform_bind_group_layout);
+        bind_group_layouts.insert("texture".to_string(), texture_bind_group_layout);
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -238,7 +266,7 @@ impl<'a> State<'a> {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -274,19 +302,22 @@ impl<'a> State<'a> {
         let mut rect = RectangleShape::new(context.clone(), (100., 100.).into());
         rect.set_position((200., 200.).into());
         rect.set_origin((50., 50.).into());
+        rect.set_fill_color(RED);
 
         let rect2 = RectangleShape::new(context.clone(), (32., 32.).into());
         // rect.set_position((position))
 
-        let mut circ = CircleShape::new(context.clone(), 50., 30);
-        circ.set_position((300., 300.).into());
+        // let mut circ = CircleShape::new(context.clone(), 50., 30);
+        // circ.set_position((300., 300.).into());
 
         let player_bytes = include_bytes!("../assets/spritesheets/player.png");
         let texture = Texture::from_bytes(context.clone(), player_bytes, "player").unwrap();
-        let sprite = Sprite::new(context.clone(), texture);
+        // let sprite = Sprite::new(context.clone(), texture);
+        let asset_manager = AssetManager::new();
 
         Self {
             surface,
+            texture, //: Texture::empty(context.clone()).unwrap(),
             context,
             window,
             render_pipeline,
@@ -299,9 +330,10 @@ impl<'a> State<'a> {
             projection_bind_group,
             rect,
             rect2,
-            circ,
+            // circ,
             rotation: 0.,
-            sprite
+            asset_manager,
+            // sprite,
         }
     }
 
@@ -373,11 +405,13 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(1, &self.resolution_bind_group, &[]);
             render_pass.set_bind_group(2, &self.projection_bind_group, &[]);
 
+            render_pass.set_bind_group(4, &self.texture.bind_group, &[]);
+
             use rusty_core::graphics::Drawable;
             let rect_mesh = self.rect.mesh();
             render_pass.draw_mesh(rect_mesh);
             // render_pass.draw_mesh(&self.rect2.mesh);
-            render_pass.draw_mesh(&self.circ.mesh);
+            // render_pass.draw_mesh(&self.circ.mesh);
         }
 
         context.queue.submit(std::iter::once(encoder.finish()));

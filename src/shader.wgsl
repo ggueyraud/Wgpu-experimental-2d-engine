@@ -21,6 +21,13 @@ var<uniform> projection: mat4x4<f32>;
 @group(3) @binding(0)
 var<uniform> transforms: mat4x4<f32>;
 
+@group(4) @binding(0)
+var t_diffuse: texture_2d<f32>;
+@group(4) @binding(1)
+var s_diffuse: sampler;
+@group(4) @binding(2)
+var<uniform> t_size: vec2<f32>;
+
 @vertex
 fn vs_main(
     model: VertexInput
@@ -28,12 +35,12 @@ fn vs_main(
     var out: VertexOutput;
     out.clip_position = projection * transforms * vec4<f32>(model.position, 1.0);
     out.color = model.color;
-    out.tex_coords = model.tex_coords;
+    out.tex_coords = model.tex_coords / t_size;
 
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return in.color;
+    return textureSample(t_diffuse, s_diffuse, in.tex_coords); // * in.color;
 }
