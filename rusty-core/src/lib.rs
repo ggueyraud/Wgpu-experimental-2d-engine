@@ -16,6 +16,7 @@ pub mod math;
 
 pub use glam;
 pub use wgpu;
+pub use winit;
 
 #[derive(Debug)]
 pub struct Context {

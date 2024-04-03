@@ -1,6 +1,10 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, fmt::Debug};
 
-use super::{color, Mesh, Transform, Vertex, texture::{self, Texture}};
+use super::{
+    color,
+    texture::{self, Texture},
+    Mesh, Transform, Vertex,
+};
 use crate::{math::Rect, Ctx};
 use glam::Vec2;
 use wgpu::{util::DeviceExt, BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat};
@@ -10,7 +14,7 @@ use wgpu::{util::DeviceExt, BufferAddress, VertexAttribute, VertexBufferLayout, 
 pub struct ShapeVertex {
     pub position: [f32; 3],
     pub color: [f32; 4],
-    pub tex_coords: [f32; 2]
+    pub tex_coords: [f32; 2],
 }
 
 impl Vertex for ShapeVertex {
@@ -34,8 +38,8 @@ impl Vertex for ShapeVertex {
                 VertexAttribute {
                     offset: mem::size_of::<[f32; 7]>() as BufferAddress,
                     shader_location: 2,
-                    format: VertexFormat::Float32x2
-                }
+                    format: VertexFormat::Float32x2,
+                },
             ],
         }
     }
@@ -45,6 +49,8 @@ pub trait Shape: super::Transformable {
     fn set_fill_color(&mut self, color: color::Color);
 
     fn point(&self, index: usize) -> Vec2;
+
+    fn set_texture_rect(&mut self, rect: Rect);
 
     fn point_count(&self) -> usize;
 }
@@ -56,7 +62,7 @@ pub struct RectangleShape {
     vertices: Vec<ShapeVertex>,
     color: color::Color,
     context: Ctx,
-    // pub texture: texture::Texture
+    texture_rect: Rect, // pub texture: texture::Texture
 }
 
 impl RectangleShape {
@@ -70,22 +76,22 @@ impl RectangleShape {
             ShapeVertex {
                 position: [0., 0., 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [0., 0.],
             },
             ShapeVertex {
                 position: [0., size.y, 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 48.]
+                tex_coords: [0., 36.],
             },
             ShapeVertex {
                 position: [size.x, size.y, 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [48., 48.]
+                tex_coords: [33., 36.],
             },
             ShapeVertex {
                 position: [size.x, 0., 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [48., 0.]
+                tex_coords: [33., 0.],
             },
         ];
 
@@ -160,6 +166,7 @@ impl RectangleShape {
             // texture: Texture::empty(context.clone()).unwrap(),
             color: color::WHITE,
             context,
+            texture_rect: Default::default(),
         };
 
         // rect.update();
@@ -183,6 +190,21 @@ impl RectangleShape {
             if let Some(vertex) = self.vertices.get_mut(i) {
                 vertex.position = [point.x, point.y, 0.0];
                 vertex.color = self.color.into();
+                vertex.tex_coords = match i {
+                    0 => [self.texture_rect.x, self.texture_rect.y],
+                    1 => [
+                        self.texture_rect.x,
+                        self.texture_rect.y + self.texture_rect.height,
+                    ],
+                    2 => [
+                        self.texture_rect.x + self.texture_rect.width,
+                        self.texture_rect.y + self.texture_rect.height,
+                    ],
+                    _ => [
+                        self.texture_rect.x + self.texture_rect.width,
+                        self.texture_rect.y,
+                    ],
+                };
             }
 
             // TODO : writter buffer
@@ -202,9 +224,14 @@ impl RectangleShape {
 }
 
 impl Shape for RectangleShape {
+    fn set_texture_rect(&mut self, rect: Rect) {
+        self.texture_rect = rect;
+        self.update();
+    }
+
     fn point(&self, index: usize) -> Vec2 {
         match index {
-            1 => (0., self.size.x).into(),
+            1 => (0., self.size.y).into(),
             2 => self.size,
             3 => (self.size.x, 0.).into(),
             _ => (0., 0.).into(),
@@ -242,6 +269,15 @@ impl super::Transformable for RectangleShape {
 
     fn r#move(&mut self, offset: Vec2) {
         self.mesh.transform.position += offset;
+        println!("Ok");
+
+        let ctx = self.context.lock().unwrap();
+        ctx.queue.write_buffer(
+            &self.mesh.buffer,
+            0,
+            bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
+        );
+        drop(ctx);
 
         self.update();
     }
@@ -325,7 +361,7 @@ impl CircleShape {
         vertices.push(ShapeVertex {
             position: center,
             color,
-            tex_coords: [0., 0.]
+            tex_coords: [0., 0.],
         });
 
         for i in 0..point_count {
@@ -336,7 +372,7 @@ impl CircleShape {
             vertices.push(ShapeVertex {
                 position: [x, y, 0.0],
                 color,
-                tex_coords: [0., 0.]
+                tex_coords: [0., 0.],
             });
 
             indices.push(0);
@@ -382,6 +418,8 @@ impl CircleShape {
 }
 
 impl Shape for CircleShape {
+    fn set_texture_rect(&mut self, rect: Rect) {}
+
     fn point(&self, index: usize) -> Vec2 {
         let angle = (index as f32 / self.point_count as f32) * 2.0 * PI - (PI / 2.0);
 

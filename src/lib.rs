@@ -13,11 +13,12 @@ use rusty_core::{
         texture::Texture,
         Transformable, Vertex,
     },
-    wgpu, Context, Ctx,
+    wgpu, winit,
+    winit::{event::WindowEvent, window::Window},
+    Context, Ctx,
 };
 use rusty_engine::asset_manager::AssetManager;
 use wgpu::util::DeviceExt;
-use winit::{event::WindowEvent, window::Window};
 
 mod player;
 
@@ -33,14 +34,10 @@ struct State<'a> {
     resolution_bind_group: wgpu::BindGroup,
     projection_buffer: wgpu::Buffer,
     projection_bind_group: wgpu::BindGroup,
-    rect: RectangleShape,
-    rect2: RectangleShape,
-    // circ: CircleShape,
     rotation: f32,
     // sprite: Sprite,
-    texture: Texture,
     asset_manager: AssetManager,
-    // player: player::Player,
+    player: player::Player,
 }
 
 impl<'a> State<'a> {
@@ -191,12 +188,11 @@ impl<'a> State<'a> {
 
         // Projection uniform
         // let projection = glam::f32::Mat4::orthographic_rh(0., size.width as f32, 400., 0., 0., 1.);
-        let projection =
-            Mat4::orthographic_rh(0.0, size.width as f32, size.height as f32, 0.0, -1.0, 0.0);
+        let projection = create_projection_matrice(size);
         let projection_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("projection buffer"),
             contents: bytemuck::cast_slice(&[projection]),
-            usage: wgpu::BufferUsages::UNIFORM,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
         let projection_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -275,7 +271,6 @@ impl<'a> State<'a> {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
-                // cull_mode: None,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Requires Features::DEPTH_CLIP_CONTROL
@@ -299,25 +294,18 @@ impl<'a> State<'a> {
             render_pipelines: HashMap::new(),
             bind_group_layouts,
         }));
-        let mut rect = RectangleShape::new(context.clone(), (100., 100.).into());
-        rect.set_position((200., 200.).into());
-        rect.set_origin((50., 50.).into());
-        rect.set_fill_color(RED);
 
-        let rect2 = RectangleShape::new(context.clone(), (32., 32.).into());
-        // rect.set_position((position))
-
-        // let mut circ = CircleShape::new(context.clone(), 50., 30);
-        // circ.set_position((300., 300.).into());
-
-        let player_bytes = include_bytes!("../assets/spritesheets/player.png");
-        let texture = Texture::from_bytes(context.clone(), player_bytes, "player").unwrap();
-        // let sprite = Sprite::new(context.clone(), texture);
-        let asset_manager = AssetManager::new();
+        let mut asset_manager = AssetManager::new();
+        let texture = asset_manager
+            .load_texture(
+                context.clone(),
+                std::path::Path::new("assets/spritesheets/GR-panda.png"),
+            )
+            .unwrap();
+        let player = player::Player::new(context.clone(), texture);
 
         Self {
             surface,
-            texture, //: Texture::empty(context.clone()).unwrap(),
             context,
             window,
             render_pipeline,
@@ -328,16 +316,14 @@ impl<'a> State<'a> {
             resolution_bind_group,
             projection_buffer,
             projection_bind_group,
-            rect,
-            rect2,
-            // circ,
             rotation: 0.,
             asset_manager,
-            // sprite,
+            player,
         }
     }
 
     fn input(&mut self, event: &WindowEvent) -> bool {
+        self.player.process_event(event);
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 self.mouse_position = (position.x as f32, position.y as f32).into();
@@ -364,14 +350,21 @@ impl<'a> State<'a> {
             context.config.width = new_size.width;
             context.config.height = new_size.height;
 
+            // Update projection matrice
+            let projection = create_projection_matrice(new_size);
+            context.queue.write_buffer(
+                &self.projection_buffer,
+                0,
+                bytemuck::cast_slice(&[projection]),
+            );
+
             self.surface.configure(&context.device, &context.config);
         }
     }
 
     fn update(&mut self, dt: f32) {
-        // self.rotation += dt * 360.;
-        // println!("{:?}", dt * 360.);
-        self.rect.rotate(dt * 1.);
+        // self.rect.rotate(dt * 1.);
+        self.player.update(dt);
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -405,13 +398,11 @@ impl<'a> State<'a> {
             render_pass.set_bind_group(1, &self.resolution_bind_group, &[]);
             render_pass.set_bind_group(2, &self.projection_bind_group, &[]);
 
-            render_pass.set_bind_group(4, &self.texture.bind_group, &[]);
+            render_pass.set_bind_group(4, &self.player.texture.bind_group, &[]);
 
             use rusty_core::graphics::Drawable;
-            let rect_mesh = self.rect.mesh();
+            let rect_mesh = self.player.rect.mesh();
             render_pass.draw_mesh(rect_mesh);
-            // render_pass.draw_mesh(&self.rect2.mesh);
-            // render_pass.draw_mesh(&self.circ.mesh);
         }
 
         context.queue.submit(std::iter::once(encoder.finish()));
@@ -476,4 +467,8 @@ pub async fn run() {
         }
         _ => {}
     });
+}
+
+fn create_projection_matrice(size: winit::dpi::PhysicalSize<u32>) -> Mat4 {
+    Mat4::orthographic_rh(0., size.width as f32, size.height as f32, 0., -1., 0.)
 }

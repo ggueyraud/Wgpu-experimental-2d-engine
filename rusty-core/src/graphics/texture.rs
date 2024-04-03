@@ -42,15 +42,15 @@ impl Texture {
                 aspect: wgpu::TextureAspect::All,
                 texture: &texture,
                 mip_level: 0,
-                origin: wgpu::Origin3d::ZERO
+                origin: wgpu::Origin3d::ZERO,
             },
             &[0, 0, 0, 0],
             wgpu::ImageDataLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * 1),
-                rows_per_image: Some(1)
+                rows_per_image: Some(1),
             },
-            size
+            size,
         );
 
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -84,8 +84,13 @@ impl Texture {
             texture,
             view,
             sampler,
-            bind_group
+            bind_group,
         })
+    }
+
+    pub fn from_path(context: Ctx, path: &std::path::Path, label: Option<&str>) -> Result<Self> {
+        let image = image::open(path).unwrap();
+        Self::from_image(context, &image, label)
     }
 
     pub fn from_image(
@@ -142,13 +147,15 @@ impl Texture {
         });
         let size = Vec2 {
             x: dimensions.0 as f32,
-            y: dimensions.1 as f32
+            y: dimensions.1 as f32,
         };
-        let size_buffer = ctx.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("texture size"),
-            contents: bytemuck::cast_slice(&[size]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
-        });
+        let size_buffer = ctx
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("texture size"),
+                contents: bytemuck::cast_slice(&[size]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            });
 
         let texture_bind_layout = ctx.bind_group_layouts.get("texture").unwrap();
         let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -164,8 +171,8 @@ impl Texture {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
-                    resource: size_buffer.as_entire_binding()
-                }
+                    resource: size_buffer.as_entire_binding(),
+                },
             ],
             label,
         });
