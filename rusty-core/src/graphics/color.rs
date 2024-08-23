@@ -21,7 +21,7 @@ impl Into<[f32; 4]> for Color {
             (self.0 / 255) as f32,
             (self.1 / 255) as f32,
             (self.2 / 255) as f32,
-            1.0
+            1.0,
         ]
     }
 }
@@ -32,9 +32,9 @@ mod tests {
 
     #[test]
     fn into_accepted_wgsl_color_format() {
-        let color: [f32; 3] = Color(255, 255, 255).into();
-        assert_eq!(color, [1., 1., 1.]);
-        let color: [f32; 3] = Color(155, 155, 155).into();
-        assert_eq!(color, [(155 / 255) as f32; 3])
+        let color: [f32; 4] = Color(255, 255, 255).into();
+        assert_eq!(color, [1., 1., 1., 1.0]);
+        let color: [f32; 4] = Color(155, 155, 155).into();
+        assert_eq!(color, [0., 0., 0., 1.]);
     }
 }
