@@ -13,8 +13,8 @@ use rusty_core::{
         texture::Texture,
         Transformable, Vertex,
     },
-    wgpu, winit,
-    winit::{event::WindowEvent, window::Window},
+    wgpu::{self, PipelineCompilationOptions},
+    winit::{self, event::WindowEvent, window::Window},
     Context, Ctx,
 };
 use rusty_engine::asset_manager::AssetManager;
@@ -252,10 +252,12 @@ impl<'a> State<'a> {
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render pipeline"),
             layout: Some(&render_pipeline_layout),
+            cache: None,
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[ShapeVertex::desc()],
+                compilation_options: PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -265,6 +267,7 @@ impl<'a> State<'a> {
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
+                compilation_options: PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
