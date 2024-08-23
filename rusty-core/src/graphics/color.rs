@@ -15,12 +15,12 @@ pub const GREEN: Color = Color(0, 255, 0);
 #[allow(dead_code)]
 pub const BLUE: Color = Color(0, 0, 255);
 
-impl Into<[f32; 4]> for Color {
-    fn into(self) -> [f32; 4] {
+impl From<Color> for [f32; 4] {
+    fn from(val: Color) -> Self {
         [
-            (self.0 / 255) as f32,
-            (self.1 / 255) as f32,
-            (self.2 / 255) as f32,
+            (val.0 / 255) as f32,
+            (val.1 / 255) as f32,
+            (val.2 / 255) as f32,
             1.0,
         ]
     }

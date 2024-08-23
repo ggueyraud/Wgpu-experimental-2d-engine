@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 
 use crate::{math::Rect, Context};
 
-use super::{color, shape::ShapeVertex, texture::Texture, Mesh, Transformable, Vertex};
+use super::{color, shape::ShapeVertex, texture::Texture, Mesh, Transformable};
 
 pub struct Sprite {
     mesh: Mesh,

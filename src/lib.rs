@@ -23,8 +23,6 @@ struct State<'a> {
     resolution_bind_group: wgpu::BindGroup,
     projection_buffer: wgpu::Buffer,
     projection_bind_group: wgpu::BindGroup,
-    rotation: f32,
-    // sprite: Sprite,
     asset_manager: AssetManager,
     player: player::Player,
 }
@@ -300,7 +298,6 @@ impl<'a> State<'a> {
             resolution_bind_group,
             projection_buffer,
             projection_bind_group,
-            rotation: 0.,
             asset_manager,
             player,
         }

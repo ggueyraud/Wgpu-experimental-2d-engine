@@ -1,10 +1,6 @@
 use std::{f32::consts::PI, fmt::Debug};
 
-use super::{
-    color,
-    texture::{self, Texture},
-    Mesh, Transform, Vertex,
-};
+use super::{color, Mesh, Vertex};
 use crate::{math::Rect, Context};
 use glam::Vec2;
 use wgpu::{util::DeviceExt, BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat};
@@ -403,7 +399,7 @@ impl CircleShape {
 }
 
 impl Shape for CircleShape {
-    fn set_texture_rect(&mut self, rect: Rect) {}
+    fn set_texture_rect(&mut self, _rect: Rect) {}
 
     fn point(&self, index: usize) -> Vec2 {
         let angle = (index as f32 / self.point_count as f32) * 2.0 * PI - (PI / 2.0);
@@ -421,7 +417,7 @@ impl Shape for CircleShape {
         self.vertices.len()
     }
 
-    fn set_fill_color(&mut self, color: color::Color) {}
+    fn set_fill_color(&mut self, _color: color::Color) {}
 }
 
 impl super::Transformable for CircleShape {

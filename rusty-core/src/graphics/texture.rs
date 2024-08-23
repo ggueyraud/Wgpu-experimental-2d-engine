@@ -47,7 +47,7 @@ impl Texture {
             &[0, 0, 0, 0],
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * 1),
+                bytes_per_row: Some(4),
                 rows_per_image: Some(1),
             },
             size,

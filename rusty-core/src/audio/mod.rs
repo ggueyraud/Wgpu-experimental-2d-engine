@@ -1,7 +1,4 @@
-use rodio::OutputStreamHandle;
-use rodio::{source::Source, Decoder, OutputStream};
-use std::io::{BufReader, Seek};
-use std::{fs::File, io::Read};
+use std::io::BufReader;
 
 pub struct Music {
     // stream: OutputStreamHandle
