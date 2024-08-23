@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install alsa-sys
+        run: sudo apt-get install -y alsa-sys
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -40,6 +43,9 @@ jobs:
     needs: ["clippy", "linter"]
 
     steps:
+      - name: Install alsa-sys
+        run: sudo apt-get install -y alsa-sys
+
       - name: Checkout code
         uses: actions/checkout@v4
 
