@@ -1,3 +1,4 @@
+workspace = { members = ["rusty-core", "rusty-engine"] }
 [package]
 name = "game"
 version = "0.1.0"
@@ -12,4 +13,3 @@ log = "0.4.20"
 pollster = "0.3.0"
 rusty-core = { path = "rusty-core" }
 rusty-engine = { path = "rusty-engine" }
-workspace = { members = ["rusty-core", "rusty_engine"] }
