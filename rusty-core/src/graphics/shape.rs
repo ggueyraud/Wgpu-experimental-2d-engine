@@ -269,7 +269,6 @@ impl super::Transformable for RectangleShape {
 
     fn r#move(&mut self, offset: Vec2) {
         self.mesh.transform.position += offset;
-        println!("Ok");
 
         let ctx = self.context.lock().unwrap();
         ctx.queue.write_buffer(
@@ -279,7 +278,7 @@ impl super::Transformable for RectangleShape {
         );
         drop(ctx);
 
-        self.update();
+        // self.update();
     }
 
     fn set_rotation(&mut self, rotation: f32) {

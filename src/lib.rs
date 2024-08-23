@@ -6,13 +6,7 @@ use std::{
 
 use rusty_core::{
     glam::{f32::Mat4, Vec2},
-    graphics::{
-        color::RED,
-        shape::{CircleShape, RectangleShape, Shape, ShapeVertex},
-        sprite::Sprite,
-        texture::Texture,
-        Transformable, Vertex,
-    },
+    graphics::{shape::ShapeVertex, Vertex},
     wgpu::{self, PipelineCompilationOptions},
     winit::{self, event::WindowEvent, window::Window},
     Context, Ctx,

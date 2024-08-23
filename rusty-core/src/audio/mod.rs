@@ -1,7 +1,7 @@
-use std::{fs::File, io::Read};
-use std::io::{BufReader, Seek};
 use rodio::OutputStreamHandle;
-use rodio::{Decoder, OutputStream, source::Source};
+use rodio::{source::Source, Decoder, OutputStream};
+use std::io::{BufReader, Seek};
+use std::{fs::File, io::Read};
 
 pub struct Music {
     // stream: OutputStreamHandle
@@ -10,14 +10,14 @@ pub struct Music {
 impl Music {
     pub fn new(filename: &str) -> Self {
         let (_stream, handle) = rodio::OutputStream::try_default().unwrap();
-    let sink = rodio::Sink::try_new(&handle).unwrap();
+        let sink = rodio::Sink::try_new(&handle).unwrap();
 
-    let file = std::fs::File::open(filename).unwrap();
-    sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
+        let file = std::fs::File::open(filename).unwrap();
+        sink.append(rodio::Decoder::new(BufReader::new(file)).unwrap());
 
-    sink.detach();
-    // sink
-    // sink.sleep_until_end();
+        sink.detach();
+        // sink
+        // sink.sleep_until_end();
 
         // let s = Self {
         //     stream: stream_handle

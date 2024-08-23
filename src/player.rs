@@ -177,44 +177,41 @@ impl Player {
     }
 
     pub fn process_event(&mut self, event: &WindowEvent) {
-        match event {
-            WindowEvent::KeyboardInput { event, .. } => {
-                // match self.direction {
-                //     Direction::Left | Direction::Down | Direction::Right | Direction::Up => {
-                //         if !event.state.is_pressed() {
-                //             if let Some(animation) =
-                //                 self.animations.get_mut(&self.current_animation)
-                //             {
-                //                 animation.reset();
-                //                 self.direction = Direction::None;
-                //             }
-                //         }
-                //     }
-                //     _ => {}
-                // }
+        if let WindowEvent::KeyboardInput { event, .. } = event {
+            // match self.direction {
+            //     Direction::Left | Direction::Down | Direction::Right | Direction::Up => {
+            //         if !event.state.is_pressed() {
+            //             if let Some(animation) =
+            //                 self.animations.get_mut(&self.current_animation)
+            //             {
+            //                 animation.reset();
+            //                 self.direction = Direction::None;
+            //             }
+            //         }
+            //     }
+            //     _ => {}
+            // }
 
-                let (animation, direction) = match event.physical_key {
-                    PhysicalKey::Code(KeyCode::ArrowUp) => ("up", Direction::Up),
-                    PhysicalKey::Code(KeyCode::ArrowLeft) => ("left", Direction::Left),
-                    PhysicalKey::Code(KeyCode::ArrowRight) => ("right", Direction::Right),
-                    PhysicalKey::Code(KeyCode::ArrowDown) => ("down", Direction::Down),
-                    _ => {
-                        return;
-                    }
-                };
-
-                if !event.state.is_pressed() {
-                    if let Some(animation) = self.animations.get_mut(&self.current_animation) {
-                        animation.reset();
-                        self.direction = Direction::None;
-                        return;
-                    }
+            let (animation, direction) = match event.physical_key {
+                PhysicalKey::Code(KeyCode::ArrowUp) => ("up", Direction::Up),
+                PhysicalKey::Code(KeyCode::ArrowLeft) => ("left", Direction::Left),
+                PhysicalKey::Code(KeyCode::ArrowRight) => ("right", Direction::Right),
+                PhysicalKey::Code(KeyCode::ArrowDown) => ("down", Direction::Down),
+                _ => {
+                    return;
                 }
+            };
 
-                self.current_animation = animation.to_string();
-                self.direction = direction;
+            if !event.state.is_pressed() {
+                if let Some(animation) = self.animations.get_mut(&self.current_animation) {
+                    animation.reset();
+                    self.direction = Direction::None;
+                    return;
+                }
             }
-            _ => {}
+
+            self.current_animation = animation.to_string();
+            self.direction = direction;
         }
     }
 
@@ -232,8 +229,9 @@ impl Player {
 
         if let Some(animation) = self.animations.get_mut(&self.current_animation) {
             if animation.update(dt) {
+                println!("Should update animation");
                 if let Some(frame) = animation.get_frame() {
-                    // self.rect.set_texture_rect(*frame);
+                    self.rect.set_texture_rect(*frame);
                 }
             }
         }

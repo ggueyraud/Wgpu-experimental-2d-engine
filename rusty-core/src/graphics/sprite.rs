@@ -1,5 +1,5 @@
-use wgpu::util::DeviceExt;
 use glam::Vec2;
+use wgpu::util::DeviceExt;
 
 use crate::{math::Rect, Ctx};
 
@@ -28,22 +28,22 @@ impl Sprite {
             ShapeVertex {
                 position: [0., 0., 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [0., 0.],
             },
             ShapeVertex {
                 position: [0., texture_rect.height, 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [0., 0.],
             },
             ShapeVertex {
                 position: [texture_rect.width, texture_rect.height, 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [0., 0.],
             },
             ShapeVertex {
                 position: [texture_rect.width, 0., 0.],
                 color: [1., 1., 1., 1.0],
-                tex_coords: [0., 0.]
+                tex_coords: [0., 0.],
             },
         ];
         let indices: Vec<u16> = vec![0, 1, 3, 1, 2, 3];
@@ -126,8 +126,6 @@ impl Transformable for Sprite {
 
     fn set_scale(&mut self, scale: f32) {
         self.mesh.transform.scale = scale;
-
-        
     }
 
     fn scale(&self) -> f32 {
