@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Install alsa-sys
-        run: sudo apt-get install -y alsa-sys
+        run: sudo apt-get install libasound2-dev libudev-dev
 
       - name: Checkout code
         uses: actions/checkout@v4
