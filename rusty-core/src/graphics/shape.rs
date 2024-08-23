@@ -5,7 +5,7 @@ use super::{
     texture::{self, Texture},
     Mesh, Transform, Vertex,
 };
-use crate::{math::Rect, Ctx};
+use crate::{math::Rect, Context};
 use glam::Vec2;
 use wgpu::{util::DeviceExt, BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat};
 
@@ -61,7 +61,6 @@ pub struct RectangleShape {
     mesh: Mesh,
     vertices: Vec<ShapeVertex>,
     color: color::Color,
-    context: Ctx,
     texture_rect: Rect, // pub texture: texture::Texture
 }
 
@@ -70,7 +69,8 @@ impl RectangleShape {
         &mut self.mesh
     }
 
-    pub fn new(context: Ctx, size: Vec2) -> Self {
+    pub fn new(size: Vec2) -> Self {
+        let gl_context = Context::get();
         // Generate buffer
         let vertices = vec![
             ShapeVertex {
@@ -97,21 +97,22 @@ impl RectangleShape {
 
         let indices: Vec<u16> = vec![0, 1, 3, 1, 2, 3];
 
-        let ctx = context.lock().unwrap();
-        let vertex_buffer = ctx
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            });
-        let index_buffer = ctx
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index buffer"),
-                contents: bytemuck::cast_slice(&indices),
-                usage: wgpu::BufferUsages::INDEX,
-            });
+        let vertex_buffer =
+            gl_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex buffer"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                });
+        let index_buffer =
+            gl_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index buffer"),
+                    contents: bytemuck::cast_slice(&indices),
+                    usage: wgpu::BufferUsages::INDEX,
+                });
 
         // let transform = Transform::default();
         // let transform_buffer = ctx.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -141,15 +142,12 @@ impl RectangleShape {
         //     label: Some("transform bind group")
         // });
 
-        drop(ctx);
-
         // let mesh = Mesh {
         //     vertex_buffer,
         //     index_buffer,
         //     num_elements: indices.len() as u32,
         // };
         let mesh = Mesh::new(
-            context.clone(),
             vertex_buffer,
             index_buffer,
             indices.len() as u32,
@@ -165,7 +163,6 @@ impl RectangleShape {
             vertices,
             // texture: Texture::empty(context.clone()).unwrap(),
             color: color::WHITE,
-            context,
             texture_rect: Default::default(),
         };
 
@@ -208,13 +205,12 @@ impl RectangleShape {
             }
 
             // TODO : writter buffer
-            let ctx = self.context.lock().unwrap();
-            ctx.queue.write_buffer(
+            let gl_context = Context::get();
+            gl_context.queue.write_buffer(
                 &self.mesh.vertex_buffer,
                 0,
                 bytemuck::cast_slice(&self.vertices),
             );
-            drop(ctx);
         }
     }
 
@@ -252,13 +248,12 @@ impl super::Transformable for RectangleShape {
     fn set_position(&mut self, position: Vec2) {
         self.mesh.transform.position = position;
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
 
         self.update();
     }
@@ -270,13 +265,12 @@ impl super::Transformable for RectangleShape {
     fn r#move(&mut self, offset: Vec2) {
         self.mesh.transform.position += offset;
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
 
         // self.update();
     }
@@ -286,13 +280,12 @@ impl super::Transformable for RectangleShape {
 
         self.update();
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
     }
 
     fn rotation(&self) -> f32 {
@@ -312,13 +305,12 @@ impl super::Transformable for RectangleShape {
         // println!("Rotation deg: {}", self.mesh.transform.rotation * 180. / PI);
         // self.update();
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
     }
 
     fn set_scale(&mut self, scale: f32) {
@@ -346,11 +338,10 @@ pub struct CircleShape {
     pub mesh: Mesh,
     vertices: Vec<ShapeVertex>,
     color: color::Color,
-    context: Ctx,
 }
 
 impl CircleShape {
-    pub fn new(context: Ctx, radius: f32, point_count: u8) -> Self {
+    pub fn new(radius: f32, point_count: u8) -> Self {
         let mut vertices = Vec::with_capacity(point_count as usize + 1);
         let mut indices: Vec<u16> = Vec::with_capacity(point_count as usize * 3);
 
@@ -379,29 +370,25 @@ impl CircleShape {
             indices.push((i + 1) as u16 % point_count as u16 + 1);
         }
 
-        let ctx = context.lock().unwrap();
-        let vertex_buffer = ctx
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            });
-        let index_buffer = ctx
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index buffer"),
-                contents: bytemuck::cast_slice(&indices),
-                usage: wgpu::BufferUsages::INDEX,
-            });
-        drop(ctx);
+        let gl_context = Context::get();
+        let vertex_buffer =
+            gl_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex buffer"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                });
+        let index_buffer =
+            gl_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index buffer"),
+                    contents: bytemuck::cast_slice(&indices),
+                    usage: wgpu::BufferUsages::INDEX,
+                });
 
-        let mesh = Mesh::new(
-            context.clone(),
-            vertex_buffer,
-            index_buffer,
-            indices.len() as u32,
-        );
+        let mesh = Mesh::new(vertex_buffer, index_buffer, indices.len() as u32);
 
         Self {
             radius,
@@ -409,7 +396,6 @@ impl CircleShape {
             mesh,
             vertices,
             color: color::WHITE,
-            context,
         }
     }
 
@@ -442,13 +428,12 @@ impl super::Transformable for CircleShape {
     fn set_position(&mut self, position: Vec2) {
         self.mesh.transform.position = position;
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
 
         self.update();
     }
@@ -468,13 +453,12 @@ impl super::Transformable for CircleShape {
 
         self.update();
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
     }
 
     fn rotation(&self) -> f32 {
@@ -494,13 +478,12 @@ impl super::Transformable for CircleShape {
         println!("Rotation deg: {}", self.mesh.transform.rotation * 180. / PI);
         // self.update();
 
-        let ctx = self.context.lock().unwrap();
-        ctx.queue.write_buffer(
+        let gl_context = Context::get();
+        gl_context.queue.write_buffer(
             &self.mesh.buffer,
             0,
             bytemuck::cast_slice(&[self.mesh.transform.to_model_matrix()]),
         );
-        drop(ctx);
     }
 
     fn set_scale(&mut self, scale: f32) {

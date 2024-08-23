@@ -5,7 +5,6 @@ use rusty_core::winit::{event::WindowEvent, keyboard::PhysicalKey};
 use rusty_core::{
     graphics::{shape::RectangleShape, texture::Texture},
     math::Rect,
-    Ctx,
 };
 use rusty_engine::animation::Animation;
 use std::{collections::HashMap, rc::Rc};
@@ -31,10 +30,10 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(context: Ctx, texture: Rc<Texture>) -> Self {
+    pub fn new(texture: Rc<Texture>) -> Self {
         let width = 33.;
         let height = 36.;
-        let rect = RectangleShape::new(context, (width, height).into());
+        let rect = RectangleShape::new((width, height).into());
         let mut animations = HashMap::new();
         let current_animation = String::from("down");
 

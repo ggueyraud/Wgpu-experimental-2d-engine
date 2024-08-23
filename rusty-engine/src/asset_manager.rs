@@ -1,5 +1,5 @@
 use anyhow::Result;
-use rusty_core::{graphics::texture::Texture, Ctx};
+use rusty_core::graphics::texture::Texture;
 use std::{collections::HashMap, rc::Rc};
 
 pub struct AssetManager {
@@ -21,8 +21,8 @@ impl AssetManager {
     //     self.textures.get(name)
     // }
 
-    pub fn load_texture(&mut self, ctx: Ctx, path: &std::path::Path) -> Result<Rc<Texture>> {
-        let texture = Texture::from_path(ctx, path, None)?;
+    pub fn load_texture(&mut self, path: &std::path::Path) -> Result<Rc<Texture>> {
+        let texture = Texture::from_path(path, None)?;
         let name = path.file_name().unwrap().to_string_lossy().to_string();
         let texture = self.textures.insert(name.clone(), Rc::new(texture));
         let texture = self.get_texture(&name);

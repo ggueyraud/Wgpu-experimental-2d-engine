@@ -1,15 +1,11 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-    time::Instant,
-};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 use rusty_core::{
     glam::{f32::Mat4, Vec2},
     graphics::{shape::ShapeVertex, Vertex},
     wgpu::{self, PipelineCompilationOptions},
     winit::{self, event::WindowEvent, window::Window},
-    Context, Ctx,
+    Context,
 };
 use rusty_engine::asset_manager::AssetManager;
 use wgpu::util::DeviceExt;
@@ -18,7 +14,6 @@ mod player;
 
 struct State<'a> {
     surface: wgpu::Surface<'a>,
-    context: Ctx,
     window: Arc<Window>,
     render_pipeline: wgpu::RenderPipeline,
     mouse_buffer: wgpu::Buffer,
@@ -284,26 +279,18 @@ impl<'a> State<'a> {
             multiview: None,
         });
 
-        let context = Arc::new(Mutex::new(Context {
-            config,
-            device,
-            queue,
-            render_pipelines: HashMap::new(),
-            bind_group_layouts,
-        }));
+        Context::init(device, queue, config);
+        let gl_context = Context::get_mut();
+        gl_context.bind_group_layouts = bind_group_layouts;
 
         let mut asset_manager = AssetManager::new();
         let texture = asset_manager
-            .load_texture(
-                context.clone(),
-                std::path::Path::new("assets/spritesheets/GR-panda.png"),
-            )
+            .load_texture(std::path::Path::new("assets/spritesheets/GR-panda.png"))
             .unwrap();
-        let player = player::Player::new(context.clone(), texture);
+        let player = player::Player::new(texture);
 
         Self {
             surface,
-            context,
             window,
             render_pipeline,
             mouse_position,
@@ -324,8 +311,8 @@ impl<'a> State<'a> {
         match event {
             WindowEvent::CursorMoved { position, .. } => {
                 self.mouse_position = (position.x as f32, position.y as f32).into();
-                let context = self.context.lock().unwrap();
-                context.queue.write_buffer(
+                let gl_context = Context::get();
+                gl_context.queue.write_buffer(
                     &self.mouse_buffer,
                     0,
                     bytemuck::cast_slice(&[self.mouse_position]),
@@ -343,24 +330,24 @@ impl<'a> State<'a> {
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
-            let mut context = self.context.lock().unwrap();
-            context.config.width = new_size.width;
-            context.config.height = new_size.height;
+            let gl_context = Context::get_mut();
+            gl_context.config.width = new_size.width;
+            gl_context.config.height = new_size.height;
 
             // Update projection matrice
             let projection = create_projection_matrice(new_size);
-            context.queue.write_buffer(
+            gl_context.queue.write_buffer(
                 &self.projection_buffer,
                 0,
                 bytemuck::cast_slice(&[projection]),
             );
 
-            self.surface.configure(&context.device, &context.config);
+            self.surface
+                .configure(&gl_context.device, &gl_context.config);
         }
     }
 
     fn update(&mut self, dt: f32) {
-        // self.rect.rotate(dt * 1.);
         self.player.update(dt);
     }
 
@@ -369,12 +356,13 @@ impl<'a> State<'a> {
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-        let context = self.context.lock().unwrap();
-        let mut encoder = context
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
+        let gl_context = Context::get();
+        let mut encoder =
+            gl_context
+                .device
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Render Encoder"),
+                });
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -402,7 +390,7 @@ impl<'a> State<'a> {
             render_pass.draw_mesh(rect_mesh);
         }
 
-        context.queue.submit(std::iter::once(encoder.finish()));
+        gl_context.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
         Ok(())

@@ -1,7 +1,7 @@
 use glam::Vec2;
 use wgpu::util::DeviceExt;
 
-use crate::{math::Rect, Ctx};
+use crate::{math::Rect, Context};
 
 use super::{color, shape::ShapeVertex, texture::Texture, Mesh, Transformable, Vertex};
 
@@ -10,12 +10,12 @@ pub struct Sprite {
     vertices: Vec<ShapeVertex>,
     color: Option<color::Color>,
     texture: Texture,
-    context: Ctx,
     texture_rect: Rect,
 }
 
 impl Sprite {
-    pub fn new(context: Ctx, texture: Texture) -> Self {
+    pub fn new(texture: Texture) -> Self {
+        let gl_context = Context::get();
         // Generating the mesh
         let texture_rect = Rect {
             x: 0.,
@@ -47,35 +47,28 @@ impl Sprite {
             },
         ];
         let indices: Vec<u16> = vec![0, 1, 3, 1, 2, 3];
-        let ctx = context.lock().unwrap();
-        let vertex_buffer = ctx
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            });
-        let index_buffer = ctx
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index buffer"),
-                contents: bytemuck::cast_slice(&indices),
-                usage: wgpu::BufferUsages::INDEX,
-            });
+        let vertex_buffer =
+            gl_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex buffer"),
+                    contents: bytemuck::cast_slice(&vertices),
+                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                });
+        let index_buffer =
+            gl_context
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index buffer"),
+                    contents: bytemuck::cast_slice(&indices),
+                    usage: wgpu::BufferUsages::INDEX,
+                });
 
-        drop(ctx);
-
-        let mesh = Mesh::new(
-            context.clone(),
-            vertex_buffer,
-            index_buffer,
-            indices.len() as u32,
-        );
+        let mesh = Mesh::new(vertex_buffer, index_buffer, indices.len() as u32);
 
         Self {
             color: None,
             texture,
-            context,
             vertices,
             mesh,
             texture_rect,

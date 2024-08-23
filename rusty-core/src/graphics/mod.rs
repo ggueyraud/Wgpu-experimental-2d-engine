@@ -1,7 +1,7 @@
 use glam::{Mat4, Vec2};
 use wgpu::{util::DeviceExt, VertexBufferLayout};
 
-use crate::Ctx;
+use crate::Context;
 
 pub mod color;
 pub mod shape;
@@ -37,30 +37,27 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new(
-        context: Ctx,
-        vertex_buffer: wgpu::Buffer,
-        index_buffer: wgpu::Buffer,
-        num_elements: u32,
-    ) -> Self {
-        let ctx = context.lock().unwrap();
+    pub fn new(vertex_buffer: wgpu::Buffer, index_buffer: wgpu::Buffer, num_elements: u32) -> Self {
+        let gl_context = Context::get();
         let transform = Transform::default();
-        let buffer = ctx
+        let buffer = gl_context
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("vertex buffer"),
                 contents: bytemuck::cast_slice(&[transform.to_model_matrix()]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             });
-        let bind_group_layout = ctx.bind_group_layouts.get("transform").unwrap();
-        let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: buffer.as_entire_binding(),
-            }],
-            label: Some("transform bind group"),
-        });
+        let bind_group_layout = gl_context.bind_group_layouts.get("transform").unwrap();
+        let bind_group = gl_context
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: buffer.as_entire_binding(),
+                }],
+                label: Some("transform bind group"),
+            });
         // let bind_group_layout = ctx.bind_group_layouts.get("texture").unwrap();
         // let bind_group = ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
         //     layout: bind_group_layout,
