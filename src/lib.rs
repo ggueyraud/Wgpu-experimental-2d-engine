@@ -27,7 +27,7 @@ struct State<'a> {
     player: player::Player,
 }
 
-impl<'a> State<'a> {
+impl State<'_> {
     async fn new(window: Window) -> Self {
         let mut bind_group_layouts = HashMap::new();
 
@@ -242,13 +242,13 @@ impl<'a> State<'a> {
             cache: None,
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers: &[ShapeVertex::desc()],
                 compilation_options: PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
