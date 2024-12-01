@@ -4,7 +4,7 @@ use rusty_core::{
     glam::{f32::Mat4, Vec2},
     graphics::{shape::ShapeVertex, Vertex},
     wgpu::{self, PipelineCompilationOptions},
-    winit::{self, event::WindowEvent, window::Window},
+    winit::{self, dpi::PhysicalSize, event::WindowEvent, window::Window},
     Context,
 };
 use rusty_engine::asset_manager::AssetManager;
@@ -394,12 +394,45 @@ impl State<'_> {
     }
 }
 
+#[derive(Debug, serde::Deserialize)]
+struct App {
+    window_title: String,
+    window_size: (u32, u32),
+}
+
+impl App {
+    fn load_config() -> Self {
+        match std::fs::File::open("client.ron") {
+            Ok(mut file) => {
+                use std::io::prelude::*;
+
+                let mut contents = String::new();
+                file.read_to_string(&mut contents).unwrap();
+
+                let x: App = ron::from_str(&contents).unwrap();
+
+                x
+            }
+            _ => Self {
+                window_title: "Client Rusty Engine".to_string(),
+                window_size: (800, 800),
+            },
+        }
+    }
+}
+
 pub async fn run() {
     use winit::{event::*, event_loop::EventLoop, window::WindowBuilder};
 
     env_logger::init();
+
+    let app = App::load_config();
     let event_loop = EventLoop::new().unwrap();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let window = WindowBuilder::new()
+        .with_title(app.window_title)
+        .with_inner_size(PhysicalSize::new(app.window_size.0, app.window_size.1))
+        .build(&event_loop)
+        .unwrap();
 
     let mut last_frame_time = Instant::now();
     let mut state = State::new(window).await;
